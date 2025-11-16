@@ -16,13 +16,14 @@ import InstallNotification from './components/InstallNotification';
 import VoiceErrorNotification from './components/VoiceErrorNotification';
 import ForcedResetModal from './components/ForcedResetModal'; // Importar el nuevo modal
 import ChatMessageItem from './components/ChatMessage'; // Assuming a ChatMessageItem component for rendering messages.
+import BrowserView from './components/BrowserView';
 import { streamGenerateContent, generateImage, startActiveConversation, detectMode } from './services/geminiService';
 import {
     Chat, ChatMessage, MessageAuthor, Attachment, ModeID, Settings,
     ModelType, Artifact, ViewID, Essay, Insight, UsageTracker
 } from './types';
 import { generateSystemInstruction } from './constants';
-import { BookOpenIcon, MegaphoneIcon, ViewColumnsIcon, AcademicCapIcon, ChatBubbleLeftRightIcon, UsersIcon, ExclamationTriangleIcon, XMarkIcon } from './components/icons';
+import { BookOpenIcon, MegaphoneIcon, ViewColumnsIcon, AcademicCapIcon, ChatBubbleLeftRightIcon, UsersIcon, ExclamationTriangleIcon, XMarkIcon, SparklesIcon } from './components/icons';
 
 type VoiceModeState = 'inactive' | 'activeConversation';
 type ActiveConversationState = 'LISTENING' | 'RESPONDING';
@@ -119,6 +120,78 @@ const InsightsView: React.FC<{ insights: Insight[], onAction: (action: Insight['
     </div>
 );
 
+const DocumentationView: React.FC = () => (
+    <div className="flex-1 p-8 overflow-y-auto">
+        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-4xl mx-auto">
+            <h1>Documentación de SAM</h1>
+            <p>Bienvenido a la documentación oficial de SAM. Aquí encontrarás todo lo que necesitas saber para aprovechar al máximo tu asistente de IA.</p>
+            
+            <h2>Modos de Operación</h2>
+            <p>SAM cuenta con varios modos especializados para diferentes tareas:</p>
+            <ul>
+                <li><strong>Normal:</strong> El modo por defecto para conversaciones generales.</li>
+                <li><strong>Math:</strong> Resuelve problemas matemáticos complejos y muestra el proceso paso a paso.</li>
+                <li><strong>Canvas Dev:</strong> Un asistente de codificación que genera componentes web interactivos.</li>
+                <li><strong>Crear Ensayo:</strong> Te guía en el proceso de escritura académica, desde el esquema hasta las referencias.</li>
+                <li><strong>Search:</strong> Realiza búsquedas en la web para obtener información actualizada.</li>
+                <li><strong>Voz:</strong> Permite conversaciones fluidas en tiempo real con SAM.</li>
+                <li><strong>Imagen:</strong> Genera y edita imágenes a partir de descripciones textuales.</li>
+            </ul>
+
+            <h2>Modelos de IA</h2>
+            <p>Puedes elegir entre dos potentes modelos en la configuración:</p>
+            <ul>
+                <li><strong>SM-I1:</strong> Rápido y eficiente, ideal para la mayoría de las tareas diarias. Es el modelo utilizado en el "Modo Rápido".</li>
+                <li><strong>SM-I3 (Premium):</strong> Un modelo más avanzado para tareas complejas que requieren un razonamiento profundo. Este modelo tiene un límite de uso diario.</li>
+            </ul>
+
+            <h2>Consejos Útiles</h2>
+            <ul>
+                <li><strong>Canvas:</strong> Ancla los artefactos de código generados en tus chats para acceder a ellos rápidamente desde la vista de Canvas.</li>
+                <li><strong>Navegador:</strong> Utiliza el navegador integrado para buscar información y visitar sitios web sin salir de la aplicación.</li>
+                <li><strong>Personalización:</strong> Ve a <em>Configuración &gt; Personalización de IA</em> para ajustar la personalidad de SAM y tu profesión, obteniendo así respuestas más adaptadas a ti.</li>
+            </ul>
+        </div>
+    </div>
+);
+
+const UsageView: React.FC<{ usage: UsageTracker, settings: Settings }> = ({ usage, settings }) => {
+    const limit = usage.hasAttachment ? 15 : 20;
+    const usagePercentage = Math.min(Math.round((usage.count / limit) * 100), 100);
+    const today = new Date(usage.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    return (
+        <div className="flex-1 p-8 overflow-y-auto">
+            <h1 className="text-3xl font-bold text-text-main mb-2">Uso de Modelos</h1>
+            <p className="text-text-secondary mb-8">Monitoriza tu consumo diario de los modelos de IA de SAM.</p>
+            
+            <div className="max-w-md mx-auto bg-surface-primary p-6 rounded-2xl border border-border-subtle">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-xl font-bold text-text-main flex items-center gap-2"><SparklesIcon className="w-6 h-6 text-yellow-400"/> Modelo SM-I3 (Premium)</h2>
+                        <p className="text-sm text-text-secondary">{today}</p>
+                    </div>
+                    <div className="text-2xl font-bold text-text-main">
+                        {usage.count} <span className="text-base font-normal text-text-secondary">/ {limit}</span>
+                    </div>
+                </div>
+
+                <div className="w-full bg-surface-secondary rounded-full h-4 mt-6">
+                    <div 
+                        className="bg-accent h-4 rounded-full transition-all duration-500" 
+                        style={{ width: `${usagePercentage}%` }}
+                    ></div>
+                </div>
+                <p className="text-center text-sm text-text-secondary mt-2">{usagePercentage}% utilizado</p>
+                
+                <div className="mt-6 text-xs text-text-secondary text-center">
+                    <p>El límite de uso se restablece diariamente. Las solicitudes con archivos adjuntos pueden consumir más recursos.</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const App: React.FC = () => {
     const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -159,8 +232,6 @@ const App: React.FC = () => {
     const abortControllerRef = useRef<AbortController | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const activeConversationRef = useRef<{ close: () => void } | null>(null);
-    const creditsRef = useRef<HTMLDivElement>(null);
-    const verificationPanelRef = useRef<HTMLDivElement>(null);
 
     const currentChat = chats.find(c => c.id === currentChatId);
 
@@ -645,9 +716,6 @@ const App: React.FC = () => {
                 onShowUpdates={() => setIsUpdatesModalOpen(true)}
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
                 onShowContextMenu={(chatId, coords) => setContextMenu({ chatId, ...coords })}
-                creditsRef={creditsRef}
-                verificationPanelRef={verificationPanelRef}
-                forceOpenVerificationPanel={false}
                 activeView={activeView}
                 onSelectView={setActiveView}
             />
@@ -686,60 +754,68 @@ const App: React.FC = () => {
                 )}
                 
                 {activeView === 'canvas' && <CanvasView pinnedArtifacts={pinnedArtifacts} onOpenArtifact={setActiveArtifact} />}
+                {activeView === 'browser' && <BrowserView onClose={() => setActiveView('chat')} />}
                 {activeView === 'insights' && <InsightsView insights={DUMMY_INSIGHTS} onAction={handleInsightAction} />}
+                {activeView === 'documentation' && <DocumentationView />}
+                {activeView === 'usage' && <UsageView usage={usage} settings={settings} />}
+
                 
-                 {showVoiceErrorNotification && (
-                    <div className="absolute bottom-24 right-4 z-20">
-                        <VoiceErrorNotification onDismiss={() => setShowVoiceErrorNotification(false)} />
-                    </div>
-                )}
-
-                 {showStThemeNotification && (
-                    <div className="absolute bottom-24 right-4 z-20">
-                         <StThemeNotification
-                            onDismiss={handleDismissStNotification}
-                            onDeactivate={handleDeactivateStTheme}
-                        />
-                    </div>
-                )}
-
-                <div className="p-4 pt-0 w-full max-w-3xl mx-auto flex flex-col gap-2">
-                    {showLimitNotification && (
-                        <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 p-3 rounded-xl text-sm flex items-start gap-3 border border-yellow-500/20">
-                            <ExclamationTriangleIcon className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                                <p className="font-semibold">Límite de SM-I3 alcanzado</p>
-                                <p>Has alcanzado tu límite diario para el modelo SM-I3. El límite se restablecerá mañana.</p>
+                {activeView === 'chat' && (
+                    <>
+                        {showVoiceErrorNotification && (
+                            <div className="absolute bottom-24 right-4 z-20">
+                                <VoiceErrorNotification onDismiss={() => setShowVoiceErrorNotification(false)} />
                             </div>
-                            <button onClick={() => setShowLimitNotification(false)} className="p-1 -m-1"><XMarkIcon className="w-5 h-5" /></button>
+                        )}
+
+                        {showStThemeNotification && (
+                            <div className="absolute bottom-24 right-4 z-20">
+                                <StThemeNotification
+                                    onDismiss={handleDismissStNotification}
+                                    onDeactivate={handleDeactivateStTheme}
+                                />
+                            </div>
+                        )}
+
+                        <div className="p-4 pt-0 w-full max-w-3xl mx-auto flex flex-col gap-2">
+                            {showLimitNotification && (
+                                <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 p-3 rounded-xl text-sm flex items-start gap-3 border border-yellow-500/20">
+                                    <ExclamationTriangleIcon className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                        <p className="font-semibold">Límite de SM-I3 alcanzado</p>
+                                        <p>Has alcanzado tu límite diario para el modelo SM-I3. El límite se restablecerá mañana.</p>
+                                    </div>
+                                    <button onClick={() => setShowLimitNotification(false)} className="p-1 -m-1"><XMarkIcon className="w-5 h-5" /></button>
+                                </div>
+                            )}
+                            {currentMode === 'math' && currentChat?.messages.length > 0 && (
+                                <MathConsole
+                                    isOpen={isMathConsoleOpen}
+                                    onToggle={() => setIsMathConsoleOpen(prev => !prev)}
+                                    logs={lastSamMessage?.consoleLogs || []}
+                                />
+                            )}
+                            <ChatInput
+                                onSendMessage={handleSendMessage}
+                                onModeAction={handleModeAction}
+                                attachment={attachment}
+                                onRemoveAttachment={() => setAttachment(null)}
+                                disabled={isLoading}
+                                currentMode={currentMode}
+                                onResetMode={() => setCurrentMode('normal')}
+                                onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+                                settings={settings}
+                                onSaveSettings={handleSaveSettings}
+                                voiceModeState={voiceModeState}
+                                activeConversationState={activeConversationState}
+                                liveTranscription={liveTranscription}
+                                onEndVoiceSession={handleEndVoiceSession}
+                                usage={usage}
+                                isThemeActive={isThemeActive}
+                            />
                         </div>
-                    )}
-                    {currentMode === 'math' && currentChat?.messages.length && (
-                        <MathConsole
-                            isOpen={isMathConsoleOpen}
-                            onToggle={() => setIsMathConsoleOpen(prev => !prev)}
-                            logs={lastSamMessage?.consoleLogs || []}
-                        />
-                    )}
-                    <ChatInput
-                        onSendMessage={handleSendMessage}
-                        onModeAction={handleModeAction}
-                        attachment={attachment}
-                        onRemoveAttachment={() => setAttachment(null)}
-                        disabled={isLoading}
-                        currentMode={currentMode}
-                        onResetMode={() => setCurrentMode('normal')}
-                        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-                        settings={settings}
-                        onSaveSettings={handleSaveSettings}
-                        voiceModeState={voiceModeState}
-                        activeConversationState={activeConversationState}
-                        liveTranscription={liveTranscription}
-                        onEndVoiceSession={handleEndVoiceSession}
-                        usage={usage}
-                        isThemeActive={isThemeActive}
-                    />
-                </div>
+                    </>
+                )}
             </main>
 
             {isSettingsModalOpen && (

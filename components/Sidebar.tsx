@@ -1,5 +1,5 @@
 import React, { Fragment, useState, useEffect, RefObject } from 'react';
-import { PencilSquareIcon, WindowIcon, SparklesIcon, Cog6ToothIcon, MagnifyingGlassIcon, EllipsisVerticalIcon, ViewColumnsIcon, MegaphoneIcon, UsersIcon, CheckBadgeIcon } from './icons';
+import { PencilSquareIcon, WindowIcon, SparklesIcon, Cog6ToothIcon, MagnifyingGlassIcon, EllipsisVerticalIcon, ViewColumnsIcon, MegaphoneIcon, UsersIcon, CheckBadgeIcon, GlobeAltIcon, BookOpenIcon, ChartPieIcon } from './icons';
 import VerificationPanel from './VerificationPanel';
 import type { ViewID } from '../types';
 
@@ -18,24 +18,9 @@ interface SidebarProps {
     onShowUpdates: () => void;
     onOpenSettings: () => void;
     onShowContextMenu: (chatId: string, coords: { x: number; y: number }) => void;
-    creditsRef: RefObject<HTMLDivElement>;
-    verificationPanelRef: RefObject<HTMLDivElement>;
-    forceOpenVerificationPanel: boolean;
     activeView: ViewID;
     onSelectView: (view: ViewID) => void;
 }
-
-const creators = [
-    { name: 'Samuel Casseres', color: '#FFD700' }, 
-    { name: 'Equipo VERCE', color: '#FFD700' },
-];
-
-const collaborators = [
-    { name: 'Junayfer Palmera', color: '#3B82F6' },
-    { name: 'Danny Casseres', color: '#3B82F6' },
-    { name: 'Danna Simancas', color: '#3B82F6' },
-];
-
 
 const Sidebar: React.FC<SidebarProps> = ({ 
     isOpen, 
@@ -47,15 +32,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     onShowUpdates,
     onOpenSettings,
     onShowContextMenu,
-    creditsRef,
-    verificationPanelRef, // This ref might be obsolete or need rethinking
-    forceOpenVerificationPanel,
     activeView,
     onSelectView,
 }) => {
     const [userName, setUserName] = useState('');
-    const [isCreatorsOpen, setIsCreatorsOpen] = useState(forceOpenVerificationPanel);
-    const [isCollaboratorsOpen, setIsCollaboratorsOpen] = useState(forceOpenVerificationPanel);
     
     useEffect(() => {
       const name = localStorage.getItem('sam_ia_guest_name');
@@ -63,12 +43,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           setUserName(name);
       }
     }, []);
-
-    useEffect(() => {
-        setIsCreatorsOpen(forceOpenVerificationPanel);
-        setIsCollaboratorsOpen(forceOpenVerificationPanel);
-    }, [forceOpenVerificationPanel]);
-
 
     let pressTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -98,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={onClose}
             />
             <aside className={`absolute top-0 left-0 h-full w-80 bg-surface-primary text-text-main flex flex-col transition-transform duration-300 ease-in-out z-40 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="p-4 space-y-4 flex-shrink-0">
+                <div className="p-4 space-y-2 flex-shrink-0">
                     <div className="relative">
                         <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary st-sidebar-icon" />
                         <input type="text" placeholder="Buscar chats" className="w-full bg-surface-secondary border border-border-subtle rounded-full pl-10 pr-4 py-2 focus:ring-accent focus:border-accent outline-none" />
@@ -116,27 +90,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <ViewColumnsIcon className="w-6 h-6 text-text-secondary st-sidebar-icon" />
                         <span>Canvas</span>
                     </button>
+                    <button onClick={() => onSelectView('browser')} className={`flex items-center gap-3 p-2 rounded-lg text-left w-full transition-colors ${activeView === 'browser' ? 'bg-accent/10 text-accent' : 'hover:bg-surface-secondary'}`}>
+                        <GlobeAltIcon className="w-6 h-6 text-text-secondary st-sidebar-icon" />
+                        <span>Navegador</span>
+                    </button>
                      <button onClick={() => onSelectView('insights')} className={`flex items-center gap-3 p-2 rounded-lg text-left w-full transition-colors ${activeView === 'insights' ? 'bg-accent/10 text-accent' : 'hover:bg-surface-secondary'}`}>
                         <MegaphoneIcon className="w-6 h-6 text-text-secondary st-sidebar-icon" />
                         <span>Insights</span>
                     </button>
-                </div>
-
-                <div className="px-2 space-y-2">
-                    <VerificationPanel
-                        title="Creadores Principales"
-                        icon={SparklesIcon}
-                        collaborators={creators}
-                        isOpen={isCreatorsOpen}
-                        onToggle={() => setIsCreatorsOpen(!isCreatorsOpen)}
-                    />
-                    <VerificationPanel
-                        title="Colaboradores Clave"
-                        icon={UsersIcon}
-                        collaborators={collaborators}
-                        isOpen={isCollaboratorsOpen}
-                        onToggle={() => setIsCollaboratorsOpen(!isCollaboratorsOpen)}
-                    />
+                    <button onClick={() => onSelectView('documentation')} className={`flex items-center gap-3 p-2 rounded-lg text-left w-full transition-colors ${activeView === 'documentation' ? 'bg-accent/10 text-accent' : 'hover:bg-surface-secondary'}`}>
+                        <BookOpenIcon className="w-6 h-6 text-text-secondary st-sidebar-icon" />
+                        <span>Documentación de SAM</span>
+                    </button>
+                    <button onClick={() => onSelectView('usage')} className={`flex items-center gap-3 p-2 rounded-lg text-left w-full transition-colors ${activeView === 'usage' ? 'bg-accent/10 text-accent' : 'hover:bg-surface-secondary'}`}>
+                        <ChartPieIcon className="w-6 h-6 text-text-secondary st-sidebar-icon" />
+                        <span>Uso</span>
+                    </button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto px-4 mt-4">
@@ -171,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </ul>
                 </div>
 
-                <div ref={creditsRef} className="p-4 border-t border-border-subtle flex-shrink-0 relative">
+                <div className="p-4 border-t border-border-subtle flex-shrink-0 relative">
                      <div className="flex items-center gap-3 p-2 mb-2">
                          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center font-bold text-white">
                            {userName.charAt(0).toUpperCase()}

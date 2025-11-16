@@ -574,3 +574,49 @@ export const generateEssayReferences = async ({
         throw new Error("SAM tuvo un error al generar las referencias. Por favor, inténtalo de nuevo.");
     }
 };
+
+export const performWebSearch = async (query: string): Promise<{ summary: string; results: Array<{ title: string; uri: string }> }> => {
+    if (!API_KEY) {
+        throw new Error("Error de conexión. Por favor, revisa tu conexión a internet.");
+    }
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: query,
+            config: {
+                tools: [{ googleSearch: {} }],
+            },
+        });
+
+        const summary = response.text;
+        const rawChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+
+        const results = rawChunks
+            .map((chunk: any) => {
+                if (chunk.web && chunk.web.uri) {
+                    try {
+                        const url = new URL(chunk.web.uri);
+                         return {
+                            title: chunk.web.title || url.hostname.replace('www.',''),
+                            uri: chunk.web.uri,
+                        };
+                    } catch (e) {
+                        return null; // Invalid URI
+                    }
+                }
+                return null;
+            })
+            .filter((item): item is { title: string; uri: string } => item !== null);
+        
+        // FIX: Add explicit generic types to new Map() to resolve type inference issue with .values() and Array.from().
+        const uniqueResults: Array<{ title: string; uri: string }> = Array.from(new Map<string, { title: string; uri: string }>(results.map(item => [item.uri, item])).values());
+
+        return { summary, results: uniqueResults };
+
+    } catch (error) {
+        console.error("Error performing web search:", error);
+        throw new Error("SAM tuvo un error al realizar la búsqueda. Por favor, inténtalo de nuevo.");
+    }
+};

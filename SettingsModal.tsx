@@ -2,9 +2,11 @@ import React, { useState, ReactNode } from 'react';
 import type { Settings } from './types';
 import { 
     XMarkIcon, SunIcon, UsersIcon, TrashIcon, CheckIcon, SparklesIcon, 
-    ArrowDownTrayIcon, ShieldCheckIcon, BoltIcon, ExclamationTriangleIcon 
+    ArrowDownTrayIcon, ShieldCheckIcon, BoltIcon, ExclamationTriangleIcon, InformationCircleIcon 
 } from './components/icons';
 import { PERSONALITIES } from './constants';
+import VerificationPanel from './components/VerificationPanel';
+
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -35,6 +37,17 @@ const Card: React.FC<{children: ReactNode, className?: string}> = ({children, cl
     </div>
 );
 
+const creators = [
+    { name: 'Samuel Casseres', color: '#FFD700' }, 
+    { name: 'Equipo VERCE', color: '#FFD700' },
+];
+
+const collaborators = [
+    { name: 'Junayfer Palmera', color: '#3B82F6' },
+    { name: 'Danny Casseres', color: '#3B82F6' },
+    { name: 'Danna Simancas', color: '#3B82F6' },
+];
+
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
     isOpen, 
@@ -48,6 +61,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     onResetApp,
 }) => {
     const [activeSection, setActiveSection] = useState('account');
+    const [isCreatorsOpen, setIsCreatorsOpen] = useState(true);
+    const [isCollaboratorsOpen, setIsCollaboratorsOpen] = useState(true);
 
     if (!isOpen) return null;
 
@@ -68,6 +83,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         application: { title: 'Aplicación', icon: ArrowDownTrayIcon },
         data: { title: 'Gestión de Datos', icon: TrashIcon },
         support: { title: 'Soporte y Ayuda', icon: ShieldCheckIcon },
+        about: { title: 'Acerca de SAM', icon: InformationCircleIcon },
     };
     
     const renderSectionContent = () => {
@@ -261,6 +277,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </a>
                             </div>
                         </Card>
+                    </Section>
+                );
+            case 'about':
+                return (
+                    <Section title="Acerca de SAM" description="Conoce al equipo detrás del desarrollo y la creación de SAM IA.">
+                        <Card>
+                             <VerificationPanel
+                                title="Creadores Principales"
+                                icon={SparklesIcon}
+                                collaborators={creators}
+                                isOpen={isCreatorsOpen}
+                                onToggle={() => setIsCreatorsOpen(!isCreatorsOpen)}
+                            />
+                        </Card>
+                         <Card>
+                            <VerificationPanel
+                                title="Colaboradores Clave"
+                                icon={UsersIcon}
+                                collaborators={collaborators}
+                                isOpen={isCollaboratorsOpen}
+                                onToggle={() => setIsCollaboratorsOpen(!isCollaboratorsOpen)}
+                            />
+                        </Card>
+                         <div className="text-center text-xs text-text-secondary pt-4">
+                            <p>Versión 1.5.0</p>
+                        </div>
                     </Section>
                 );
             default:
